@@ -1,0 +1,24 @@
+<form class='task-form' method="post" action="{% url 'task_create' %}">
+  {% csrf_token %}
+  <div class="modal-header">
+    <div class="modal-title"><b>Create a new task<b></div>
+  </div>
+  <div class="modal-body">
+    {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label_tag }}</label>
+        {{ field }}
+		{% for error in field.errors %}
+			<span class="alert alert-danger">
+				<strong>{{ error|escape }}</strong>
+			</span>
+		{% endfor %}
+      </div>
+		
+    {% endfor %}
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    <button type="submit" class="btn btn-primary create-btn">Create task</button>
+  </div>
+</form>

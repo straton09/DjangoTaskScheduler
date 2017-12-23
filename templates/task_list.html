@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="page-header">Tasks</h1>
+<table class="table" id="task-table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Text</th>
+      <th>DateTime</th>
+      <th>Priority</th>
+      <th>Done</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for task in task_list %}
+      <tr>
+        <td>{{ task.id }}</td>
+        <td>{{ task.task_text }}</td>
+        <td>{{ task.exec_datetime }}</td>
+        <td>{{ task.priority }}</td>
+        <td>{{ task.done }}</td>
+        <td> 
+			<button type="button" class="btn btn-danger delete-task" data-task_id="{{ task.id }}" data-task_text = "{{ task.task_text }}" > 
+			Delete 
+			</button> 
+		</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="7" class="text-center bg-warning">No tasks!</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div>
+  <button type="button" class="btn btn-primary create-task" data-url="{% url 'task_create' %}">
+    Create Task
+  </button>
+</div>
+
+<div class="modal fade" id="modal-task">
+	<div class="modal-dialog">
+		<div class="modal-content">
+		</div>
+    </div>
+</div>
+	
+{% endblock %}
+  
+{% block javascript %}
+<script>
+	$(function () {
+
+		$(".create-task").click(function () {
+			$.ajax({
+				url: '/tasks/create/',
+				type: 'get',
+				dataType: 'json',
+				beforeSend: function () {
+					$("#modal-task").modal("show");
+				},
+				success: function (data) {
+					$("#modal-task .modal-content").html(data.html_form);
+					$('form').find('input[name="exec_datetime"]').attr({type:"datetime-local"});
+				}
+			});
+		});
+		
+		$(".delete-task").click(function () {
+			var btn = $(this);
+			var task_id = btn.attr('data-task_id');
+			var task_text = btn.attr('data-task_text');
+			
+			if(confirm("Sure delete task "+task_text+"?"))
+			{
+				$.ajax({
+				  url: '/tasks/'+task_id+'/delete/',
+				  type: 'post',
+				  data: {
+					csrfmiddlewaretoken: '{{ csrf_token }}',
+					id : task_id
+				  },
+				  success: function (data) {
+					if(data.success == 1)
+						window.location.reload();
+					else
+						alert('Error on deleting task!')
+				  },
+				  error: function (xhr, ajaxOptions, thrownError) {
+					if(xhr.status==404) {
+						alert("Task not found!");
+					}
+				}
+				});
+			}
+		});
+		
+		$(document).on("submit","form.task-form", function(e){
+			e.preventDefault();
+			var form = $(this);
+			$.ajax({
+			  url: form.attr("action"),
+			  data: form.serialize(),
+			  type: form.attr("method"),
+			  dataType: 'json',
+			  success: function (data) {
+				  if(data.success == 1)
+					window.location.reload();
+				  else
+					$("#modal-task .modal-content").html(data.html_form);
+					$('form').find('input[name="exec_datetime"]').attr({type:"datetime-local"});
+			  }
+			});
+			return false;
+		});
+		
+
+	  
+	});
+</script>
+  {% endblock %}
